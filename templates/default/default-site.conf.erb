@@ -1,0 +1,26 @@
+server {
+    listen         80;
+    server_name    <%= @node[:fqdn] %> www.<%= @node[:fqdn] %>;
+    charset        utf-8;
+    access_log     /var/log/nginx/<%= @node[:fqdn] %>_access.log;
+    error_log      /var/log/nginx/<%= @node[:fqdn] %>_error.log crit;
+    root           /srv/<%= @node[:fqdn] %>/current/public;
+
+    if ($host = 'www.<%= @node[:fqdn] %>') {
+      rewrite  ^/(.*)$  http://<%= @node[:fqdn] %>/$1 permanent;
+    }
+
+    location / {
+      try_files $uri @rails;
+      rewrite ^/(.*)/$ /$1 permanent;
+    }
+
+    try_files $uri @rails;
+
+    location @rails {
+      proxy_pass http://unix:/srv/<%= @node[:fqdn] %>/shared/sockets/unicorn.sock;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header Host $http_host;
+      proxy_redirect off;
+    }
+}

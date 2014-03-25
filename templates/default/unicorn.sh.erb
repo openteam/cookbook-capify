@@ -1,0 +1,54 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:           unicorn
+# Required-Start:     $local_fs $network $time
+# Required-Stop:      $local_fs $network $time
+# Default-Start:      2 3 4 5
+# Default-Stop:       0 1 6
+# Short-Description:  unicorn
+### END INIT INFO
+
+set -u
+set -e
+
+APP_NAME="<%= @node[:fqdn] %>"
+APP_USER="rvmuser"
+ENV=production
+
+APP_ROOT="/srv/$APP_NAME/current"
+PID="/srv/$APP_NAME/shared/pids/unicorn.pid"
+UNICORN_OPTS="-D -E $ENV -c $APP_ROOT/config/unicorn.rb"
+SET_PATH="source /home/$APP_USER/.rvm/scripts/rvm; cd $APP_ROOT"
+CMD="$SET_PATH; $APP_ROOT/bin/unicorn_rails $UNICORN_OPTS"
+
+sig () {
+  test -s "$PID" && kill -$1 `cat $PID`
+}
+
+case ${1-help} in
+  start)
+    sig 0 && echo >&2 "Already running" && exit 0
+    su - $APP_USER -c "$CMD"
+  ;;
+  stop)
+    sig QUIT && exit 0
+    echo >&2 "Not running"
+  ;;
+  force-stop)
+    sig TERM && exit 0
+    echo >&2 "Not running"
+  ;;
+  restart)
+    sig QUIT && echo stopped OK
+    su - $APP_USER -c "$CMD" && exit 0
+    echo >&2 "Couldn't restart"
+  ;;
+  reload)
+    sig USR2 && echo "wait for start new daemon" && exit 0
+    echo >&2 "Couldn't 'hot'-reload, try to restart instead"
+  ;;
+  *)
+  echo >&2 "Usage: $0 <start|stop|restart|reload|force-stop>"
+  exit 1
+  ;;
+esac

@@ -1,0 +1,6 @@
+include_recipe "capify::00_aptitude"
+include_recipe "capify::01_users"
+include_recipe "capify::02_capistrano"
+include_recipe "capify::03_settings"
+include_recipe "capify::04_unicorn"
+include_recipe "capify::05_nginx"

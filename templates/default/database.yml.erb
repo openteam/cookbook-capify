@@ -1,0 +1,9 @@
+production: &production
+  adapter: <%= @adapter %>
+  database: <%= @database %>
+  username: <%= @username %>
+  host: <%= @host %>
+
+development:
+  <<: *production
+
